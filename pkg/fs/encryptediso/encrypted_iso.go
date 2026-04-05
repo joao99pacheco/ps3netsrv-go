@@ -99,7 +99,7 @@ func NewEncryptedISO(f handler.File, data1 []byte, clearRegions bool) (*Encrypte
 	}
 
 	var prevRegionEnd uint32
-	encryptedRegions := make([]region, hdr.Count-1)
+	encryptedRegions := make([]region, 0, hdr.Count-1)
 	for i, unencryptedRegion := range unencryptedRegions {
 		// some sanity checks: region "borders" must increase monotonically
 		if unencryptedRegion.End <= unencryptedRegion.Start {
