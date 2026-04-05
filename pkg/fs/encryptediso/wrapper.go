@@ -83,7 +83,7 @@ func tryGetRedumpKey(fsys pkgfs.SystemRoot, requestedPath string) ([]byte, error
 	pathElems[len(pathElems)-1] = strings.TrimSuffix(pathElems[len(pathElems)-1], ext) + dkeyExt
 	rebuiltPath := filepath.Join(pathElems...)
 	if isAbsolute {
-		rebuiltPath = filepath.Join(string(filepath.Separator), rebuiltPath)
+		rebuiltPath = string(filepath.Separator) + rebuiltPath
 	}
 	keyFile, err = fsys.Open(rebuiltPath)
 	if err == nil {
