@@ -33,6 +33,7 @@ func (FileWrapper) WrapFile(ctx context.Context, fsys *pkgfs.FS, f handler.File)
 		slog.DebugContext(ctx, "found key file for encrypted iso", slog.String("name", f.Name()))
 		return NewEncryptedISO(f, key, false)
 	case errors.Is(err, fs.ErrNotExist):
+		slog.Debug("no key file found for iso, returning unwrapped file", slog.String("name", f.Name()))
 		return f, nil
 	default:
 		return nil, fmt.Errorf("read key: %w", err)
@@ -47,7 +48,8 @@ func (FileWrapper) Name() string {
 func tryGetRedumpKey(fsys pkgfs.SystemRoot, requestedPath string) ([]byte, error) {
 	// encryption makes sense only for .iso or .ISO file inside ps3ISO or PS3ISO directory
 	ext := filepath.Ext(requestedPath)
-	if strings.EqualFold(ext, isoExt) {
+	if !strings.EqualFold(ext, isoExt) {
+		slog.Debug("file extension is not .iso, skipping encrypted iso wrapper", slog.String("ext", ext))
 		return nil, fs.ErrNotExist
 	}
 
