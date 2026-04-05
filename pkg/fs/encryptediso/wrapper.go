@@ -55,7 +55,12 @@ func tryGetRedumpKey(fsys pkgfs.SystemRoot, requestedPath string) ([]byte, error
 
 	slog.Debug("file extension is", slog.String("ext", ext))
 
+	isAbsolute := filepath.IsAbs(requestedPath)
 	pathElems := strings.Split(requestedPath, string(filepath.Separator))
+	// Remove the leading empty string from absolute paths before processing
+	if isAbsolute && len(pathElems) > 0 && pathElems[0] == "" {
+		pathElems = pathElems[1:]
+	}
 	slog.Debug("path elements are", slog.Any("elems", pathElems))
 	ps3IsoIdx := slices.IndexFunc(pathElems, func(s string) bool {
 		return strings.EqualFold(s, ps3isoDir)
@@ -76,12 +81,16 @@ func tryGetRedumpKey(fsys pkgfs.SystemRoot, requestedPath string) ([]byte, error
 	// try .dkey in REDKEY directory (instead of PS3ISO)
 	pathElems[ps3IsoIdx] = redkeyDir
 	pathElems[len(pathElems)-1] = strings.TrimSuffix(pathElems[len(pathElems)-1], ext) + dkeyExt
-	keyFile, err = fsys.Open(filepath.Join(pathElems...))
+	rebuiltPath := filepath.Join(pathElems...)
+	if isAbsolute {
+		rebuiltPath = filepath.Join(string(filepath.Separator), rebuiltPath)
+	}
+	keyFile, err = fsys.Open(rebuiltPath)
 	if err == nil {
 		defer keyFile.Close()
 		return ReadKeyFile(keyFile)
 	}
-	slog.Debug("could not find dkey file in REDKEY directory", slog.String("path", filepath.Join(pathElems...)))
+	slog.Debug("could not find dkey file in REDKEY directory", slog.String("path", rebuiltPath))
 
 	return nil, err
 }
