@@ -51,11 +51,15 @@ func tryGetRedumpKey(fsys pkgfs.SystemRoot, requestedPath string) ([]byte, error
 		return nil, fs.ErrNotExist
 	}
 
+	slog.Debug("file extension is", slog.String("ext", ext))
+
 	pathElems := strings.Split(requestedPath, string(filepath.Separator))
+	slog.Debug("path elements are", slog.Any("elems", pathElems))
 	ps3IsoIdx := slices.IndexFunc(pathElems, func(s string) bool {
 		return strings.EqualFold(s, ps3isoDir)
 	})
 	if ps3IsoIdx < 0 {
+		slog.Debug("iso index not found")
 		return nil, fs.ErrNotExist
 	}
 
@@ -65,6 +69,7 @@ func tryGetRedumpKey(fsys pkgfs.SystemRoot, requestedPath string) ([]byte, error
 		defer keyFile.Close()
 		return ReadKeyFile(keyFile)
 	}
+	slog.Debug("could not find dkey file in the same directory as iso, trying REDKEY directory")
 
 	// try .dkey in REDKEY directory (instead of PS3ISO)
 	pathElems[ps3IsoIdx] = redkeyDir
@@ -74,6 +79,7 @@ func tryGetRedumpKey(fsys pkgfs.SystemRoot, requestedPath string) ([]byte, error
 		defer keyFile.Close()
 		return ReadKeyFile(keyFile)
 	}
+	slog.Debug("could not find dkey file in REDKEY directory", slog.String("path", filepath.Join(pathElems...)))
 
 	return nil, err
 }
